@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Books">
+<title>Book Checklist</title>
+<style>
+:root{--bg:#eef1f4;--card:#fbfcfd;--ink:#1c2530;--mut:#66727f;--acc:#1f6f5c;--onacc:#fff;--line:#d9dfe5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161c;--card:#18212a;--ink:#e8edf2;--mut:#93a0ad;--acc:#5fc3a4;--onacc:#0b1f18;--line:#27323d}}
+:root[data-theme="dark"]{--bg:#10161c;--card:#18212a;--ink:#e8edf2;--mut:#93a0ad;--acc:#5fc3a4;--onacc:#0b1f18;--line:#27323d}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:8px}
+h1{margin:0;font:700 30px/1.1 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;letter-spacing:-.01em}
+#oc{color:var(--mut);font-size:14px;margin-top:4px}
+#add{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--acc);color:var(--onacc);font-size:26px;line-height:1;cursor:pointer}
+.track{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.track b{display:block;height:100%;background:var(--acc);transition:width .25s}
+#ov-wrap{margin:12px 0 22px}
+.card{background:var(--card);border-radius:14px;margin-bottom:14px;overflow:hidden;border:1px solid var(--line)}
+.gh{display:grid;grid-template-columns:1fr auto 18px;align-items:center;gap:8px;width:100%;padding:14px 16px 12px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.gn{font:700 21px/1.2 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+.gc{color:var(--mut);font-size:14px;font-variant-numeric:tabular-nums}
+.chev{color:var(--mut)}
+.gh .track{grid-column:1/-1}
+ul{list-style:none;margin:0;padding:0}
+li{border-top:1px solid var(--line)}
+.row{display:flex;gap:14px;align-items:center;width:100%;min-height:60px;padding:10px 16px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ck{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--mut);display:grid;place-items:center}
+.row.on .ck{background:var(--acc);border-color:var(--acc)}
+.row.on .ck::after{content:"✓";color:var(--onacc);font-size:15px;font-weight:700}
+.tx{display:flex;flex-direction:column;min-width:0}
+.t{font:600 16px/1.25 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+.a{color:var(--mut);font-size:13.5px;margin-top:2px}
+.row.on .t{color:var(--mut);text-decoration:line-through;text-decoration-thickness:1px}
+.del{display:block;width:100%;padding:14px;border:0;border-top:1px solid var(--line);background:none;color:var(--mut);font:inherit;font-size:14px;cursor:pointer}
+.empty{color:var(--mut);text-align:center;padding:40px 0}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+#sheet.show{display:flex}
+.panel{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
+.panel h2{margin:0 0 6px;font:700 22px "Iowan Old Style",Palatino,Georgia,serif}
+.panel p{margin:0 0 14px;color:var(--mut);font-size:14px}
+input,textarea{width:100%;font:16px/1.4 inherit;font-family:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+textarea{height:170px;resize:vertical}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font:600 16px inherit;font-family:inherit;cursor:pointer}
+.btns .go{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+#msg{color:#c0392b;font-size:14px;min-height:20px;margin:0 0 8px}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div><h1>Book Checklist</h1><div id="oc"></div></div>
+ <button id="add" aria-label="Add a list">+</button>
+</header>
+<div id="ov-wrap"><i class="track"><b id="ov"></b></i></div>
+<div id="lists"></div>
+</main>
+
+<div id="sheet" role="dialog" aria-modal="true">
+ <div class="panel">
+  <h2>Add a list</h2>
+  <p>Enter a genre name, then paste one book per line as Title - Author. A rating at the end (like 4.21) is optional. Using a name you already have replaces that list and keeps your checkmarks.</p>
+  <input id="nm" placeholder="Genre name" autocapitalize="words">
+  <textarea id="tx" placeholder="The Hobbit - J.R.R. Tolkien 4.30"></textarea>
+  <div id="msg"></div>
+  <div class="btns"><button id="cancel">Cancel</button><button class="go" id="imp">Import list</button></div>
+ </div>
+</div>
+
+<script>
+const SEED={Fiction:`1984|George Orwell|4.21
+To Kill a Mockingbird|Harper Lee|4.26
+The Great Gatsby|F. Scott Fitzgerald|3.92
+Animal Farm|George Orwell|4.03
+Harry Potter and the Philosopher’s Stone|J.K. Rowling|4.47
+The Catcher in the Rye|J.D. Salinger|3.80
+The Hunger Games|Suzanne Collins|4.36
+The Alchemist|Paulo Coelho|3.92
+The Handmaid’s Tale|Margaret Atwood|4.16
+Pride and Prejudice|Jane Austen|4.30
+Fahrenheit 451|Ray Bradbury|3.97
+The Kite Runner|Khaled Hosseini|4.36
+Lord of the Flies|William Golding|3.71
+Harry Potter and the Chamber of Secrets|J.K. Rowling|4.43
+The Hobbit|J.R.R. Tolkien|4.30
+The Da Vinci Code|Dan Brown|3.94
+Harry Potter and the Prisoner of Azkaban|J.K. Rowling|4.58
+Brave New World|Aldous Huxley|3.98
+Harry Potter and the Goblet of Fire|J.K. Rowling|4.57
+The Midnight Library|Matt Haig|3.97
+The Book Thief|Markus Zusak|4.39
+Harry Potter and the Half-Blood Prince|J.K. Rowling|4.58
+Of Mice and Men|John Steinbeck|3.90
+Harry Potter and the Order of the Phoenix|J.K. Rowling|4.50
+Harry Potter and the Deathly Hallows|J.K. Rowling|4.62
+Where the Crawdads Sing|Delia Owens|4.37
+Catching Fire|Suzanne Collins|4.37
+The Seven Husbands of Evelyn Hugo|Taylor Jenkins Reid|4.39
+Slaughterhouse-Five|Kurt Vonnegut Jr.|4.10
+The Picture of Dorian Gray|Oscar Wilde|4.13
+The Girl with the Dragon Tattoo|Stieg Larsson|4.18
+Mockingjay|Suzanne Collins|4.13
+Life of Pi|Yann Martel|3.95
+Jane Eyre|Charlotte Brontë|4.16
+Frankenstein|Mary Shelley|3.93
+All the Light We Cannot See|Anthony Doerr|4.30
+The Curious Incident of the Dog in the Night-Time|Mark Haddon|3.89
+Gone Girl|Gillian Flynn|4.15
+One Hundred Years of Solitude|Gabriel García Márquez|4.13
+The Stranger|Albert Camus|4.03
+Wuthering Heights|Emily Brontë|3.89
+The Hitchhiker’s Guide to the Galaxy|Douglas Adams|4.22
+The Help|Kathryn Stockett|4.47
+Dune|Frank Herbert|4.29
+The Fellowship of the Ring|J.R.R. Tolkien|4.41
+The Road|Cormac McCarthy|4.00
+Crime and Punishment|Fyodor Dostoevsky|4.29
+Angels & Demons|Dan Brown|3.96
+The Fault in Our Stars|John Green|4.12
+A Man Called Ove|Fredrik Backman|4.37`,
+Nonfiction:`Sapiens|Yuval Noah Harari|4.32
+The Diary of a Young Girl|Anne Frank|4.20
+Educated|Tara Westover|4.46
+Atomic Habits|James Clear|4.31
+Quiet|Susan Cain|4.07
+I’m Glad My Mom Died|Jennette McCurdy|4.42
+The Immortal Life of Henrietta Lacks|Rebecca Skloot|4.13
+Outliers|Malcolm Gladwell|4.19
+Freakonomics|Steven D. Levitt|4.01
+The Devil in the White City|Erik Larson|4.00
+Becoming|Michelle Obama|4.43
+The Subtle Art of Not Giving a F*ck|Mark Manson|3.86
+Man’s Search for Meaning|Viktor E. Frankl|4.37
+A Short History of Nearly Everything|Bill Bryson|4.21
+We Should All Be Feminists|Chimamanda Ngozi Adichie|4.39
+Thinking, Fast and Slow|Daniel Kahneman|4.16
+Born a Crime|Trevor Noah|4.48
+Into the Wild|Jon Krakauer|4.02
+Night|Elie Wiesel|4.38
+When Breath Becomes Air|Paul Kalanithi|4.41
+Invisible Women|Caroline Criado Pérez|4.33
+Guns, Germs, and Steel|Jared Diamond|4.04
+In Cold Blood|Truman Capote|4.09
+Between the World and Me|Ta-Nehisi Coates|4.40
+Killers of the Flower Moon|David Grann|4.14
+The Tipping Point|Malcolm Gladwell|4.01
+Into Thin Air|Jon Krakauer|4.27
+Stiff|Mary Roach|4.06
+Blink|Malcolm Gladwell|3.96
+A Brief History of Time|Stephen Hawking|4.21
+The Glass Castle|Jeannette Walls|4.33
+On Writing|Stephen King|4.34
+Bossypants|Tina Fey|3.96
+The Life-Changing Magic of Tidying Up|Marie Kondō|3.88
+Crying in H Mart|Michelle Zauner|4.22
+Unbroken|Laura Hillenbrand|4.39
+Wild|Cheryl Strayed|4.07
+The Power of Habit|Charles Duhigg|4.13
+I’ll Be Gone in the Dark|Michelle McNamara|4.11
+How to Win Friends & Influence People|Dale Carnegie|4.21
+I Am Malala|Malala Yousafzai|4.16
+The Art of War|Sun Tzu|3.94
+The Body Keeps the Score|Bessel van der Kolk|4.33
+Why We Sleep|Matthew Walker|4.36
+A Walk in the Woods|Bill Bryson|4.07
+Homo Deus|Yuval Noah Harari|4.18
+The Man Who Mistook His Wife for a Hat|Oliver Sacks|4.04
+Everything Is Tuberculosis|John Green|4.31
+Tuesdays with Morrie|Mitch Albom|4.22
+Braiding Sweetgrass|Robin Wall Kimmerer|4.50`,
+"Sci-Fi":`Dune|Frank Herbert|4.29
+Project Hail Mary|Andy Weir|4.51
+The Hitchhiker’s Guide to the Galaxy|Douglas Adams|4.22
+Ender’s Game|Orson Scott Card|4.31
+The Martian|Andy Weir|4.42
+Ready Player One|Ernest Cline|4.22
+All Systems Red|Martha Wells|4.10
+The Three-Body Problem|Liu Cixin|4.08
+Red Rising|Pierce Brown|4.27
+Foundation|Isaac Asimov|4.17
+Fahrenheit 451|Ray Bradbury|3.97
+Do Androids Dream of Electric Sheep?|Philip K. Dick|4.09
+1984|George Orwell|4.21
+Brave New World|Aldous Huxley|3.98
+Dark Matter|Blake Crouch|4.13
+The Hunger Games|Suzanne Collins|4.36
+Leviathan Wakes|James S.A. Corey|4.31
+Neuromancer|William Gibson|3.88
+Hyperion|Dan Simmons|4.28
+This Is How You Lose the Time War|Amal El-Mohtar|3.82
+Cinder|Marissa Meyer|4.12
+The Long Way to a Small, Angry Planet|Becky Chambers|4.16
+The Left Hand of Darkness|Ursula K. Le Guin|4.09
+Catching Fire|Suzanne Collins|4.37
+Dune Messiah|Frank Herbert|3.90
+I, Robot|Isaac Asimov|4.21
+The Time Machine|H.G. Wells|3.89
+Mockingjay|Suzanne Collins|4.13
+Annihilation|Jeff VanderMeer|3.80
+Jurassic Park|Michael Crichton|4.14
+Children of Time|Adrian Tchaikovsky|4.29
+Artificial Condition|Martha Wells|4.24
+2001: A Space Odyssey|Arthur C. Clarke|4.18
+Golden Son|Pierce Brown|4.51
+Artemis|Andy Weir|3.67
+The Restaurant at the End of the Universe|Douglas Adams|4.19
+Recursion|Blake Crouch|4.16
+The War of the Worlds|H.G. Wells|3.83
+Snow Crash|Neal Stephenson|4.01
+Frankenstein|Mary Shelley|3.93
+Old Man’s War|John Scalzi|4.23
+The Martian Chronicles|Ray Bradbury|4.16
+Stranger in a Strange Land|Robert A. Heinlein|3.92
+Speaker for the Dead|Orson Scott Card|4.12
+Rogue Protocol|Martha Wells|4.23
+Divergent|Veronica Roth|4.13
+Slaughterhouse-Five|Kurt Vonnegut Jr.|4.10
+Morning Star|Pierce Brown|4.55
+Illuminae|Amie Kaufman|4.23
+Children of Dune|Frank Herbert|3.95`,
+Romance:`The Love Hypothesis|Ali Hazelwood|4.09
+Beach Read|Emily Henry|3.95
+Book Lovers|Emily Henry|4.08
+Pride and Prejudice|Jane Austen|4.30
+People We Meet on Vacation|Emily Henry|3.84
+Red, White & Royal Blue|Casey McQuiston|4.04
+It Ends with Us|Colleen Hoover|4.06
+The Fault in Our Stars|John Green|4.12
+A Court of Thorns and Roses|Sarah J. Maas|4.14
+Happy Place|Emily Henry|3.93
+Twilight|Stephenie Meyer|3.68
+The Hating Game|Sally Thorne|3.85
+Funny Story|Emily Henry|4.18
+The Unhoneymooners|Christina Lauren|3.89
+The Seven Husbands of Evelyn Hugo|Taylor Jenkins Reid|4.39
+The Deal|Elle Kennedy|4.17
+The Kiss Quotient|Helen Hoang|3.86
+Twisted Love|Ana Huang|3.70
+Love, Theoretically|Ali Hazelwood|4.08
+Icebreaker|Hannah Grace|3.71
+Ugly Love|Colleen Hoover|3.98
+The Spanish Love Deception|Elena Armas|3.78
+A Court of Mist and Fury|Sarah J. Maas|4.63
+The Duke and I|Julia Quinn|3.79
+Love on the Brain|Ali Hazelwood|3.90
+Better Than the Movies|Lynn Painter|4.25
+Fourth Wing|Rebecca Yarros|4.56
+Me Before You|Jojo Moyes|4.26
+The Song of Achilles|Madeline Miller|4.30
+The Selection|Kiera Cass|4.07
+It Happened One Summer|Tessa Bailey|3.88
+Love and Other Words|Christina Lauren|4.19
+New Moon|Stephenie Meyer|3.63
+Fifty Shades of Grey|E.L. James|3.67
+Part of Your World|Abby Jimenez|4.24
+Just for the Summer|Abby Jimenez|4.33
+Eclipse|Stephenie Meyer|3.75
+The Seven Year Slip|Ashley Poston|4.14
+Outlander|Diana Gabaldon|4.27
+Eleanor & Park|Rainbow Rowell|3.92
+Twisted Games|Ana Huang|4.07
+Breaking Dawn|Stephenie Meyer|3.76
+A Court of Wings and Ruin|Sarah J. Maas|4.46
+Jane Eyre|Charlotte Brontë|4.16
+Yours Truly|Abby Jimenez|4.29
+To All the Boys I’ve Loved Before|Jenny Han|4.04
+The Viscount Who Loved Me|Julia Quinn|3.98
+Bride|Ali Hazelwood|3.99
+Get a Life, Chloe Brown|Talia Hibbert|3.78
+The Notebook|Nicholas Sparks|4.17`,
+Mystery:`And Then There Were None|Agatha Christie|4.27
+Murder on the Orient Express|Agatha Christie|4.19
+A Good Girl’s Guide to Murder|Holly Jackson|4.28
+Gone Girl|Gillian Flynn|4.15
+The Girl with the Dragon Tattoo|Stieg Larsson|4.18
+The Girl on the Train|Paula Hawkins|3.96
+The Silent Patient|Alex Michaelides|4.16
+The Da Vinci Code|Dan Brown|3.94
+The Thursday Murder Club|Richard Osman|3.85
+The Mysterious Affair at Styles|Agatha Christie|4.00
+The Inheritance Games|Jennifer Lynn Barnes|4.12
+One of Us Is Lying|Karen M. McManus|3.90
+The Murder of Roger Ackroyd|Agatha Christie|4.26
+The 7½ Deaths of Evelyn Hardcastle|Stuart Turton|3.77
+The Guest List|Lucy Foley|3.79
+Angels & Demons|Dan Brown|3.96
+The Cuckoo’s Calling|Robert Galbraith|3.89
+Death on the Nile|Agatha Christie|4.12
+A Study in Scarlet|Arthur Conan Doyle|4.13
+In the Woods|Tana French|3.78
+The Hound of the Baskervilles|Arthur Conan Doyle|4.14
+Still Life|Louise Penny|3.89
+The Maid|Nita Prose|3.74
+The Girl Who Played with Fire|Stieg Larsson|4.26
+Sharp Objects|Gillian Flynn|4.00
+Good Girl, Bad Blood|Holly Jackson|4.25
+The God of the Woods|Liz Moore|4.09
+Where the Crawdads Sing|Delia Owens|4.37
+The Sweetness at the Bottom of the Pie|Alan Bradley|3.82
+The Housemaid|Freida McFadden|4.26
+The A.B.C. Murders|Agatha Christie|4.03
+Murder at the Vicarage|Agatha Christie|4.03
+We Were Liars|E. Lockhart|3.66
+Truly Devious|Maureen Johnson|3.87
+The Adventures of Sherlock Holmes|Arthur Conan Doyle|4.30
+The Secret History|Donna Tartt|4.14
+The Hawthorne Legacy|Jennifer Lynn Barnes|4.18
+Dark Places|Gillian Flynn|3.94
+Rebecca|Daphne du Maurier|4.25
+The Woman in Cabin 10|Ruth Ware|3.71
+Verity|Colleen Hoover|4.27
+The Girl Who Kicked the Hornet’s Nest|Stieg Larsson|4.25
+If We Were Villains|M.L. Rio|4.07
+One for the Money|Janet Evanovich|4.04
+Magpie Murders|Anthony Horowitz|3.94
+The Silkworm|Robert Galbraith|4.05
+Everyone in My Family Has Killed Someone|Benjamin Stevenson|3.74
+The Man Who Died Twice|Richard Osman|4.34
+As Good as Dead|Holly Jackson|4.19
+The Westing Game|Ellen Raskin|3.98`,
+Thriller:`The Silent Patient|Alex Michaelides|4.16
+The Housemaid|Freida McFadden|4.26
+Gone Girl|Gillian Flynn|4.15
+Verity|Colleen Hoover|4.27
+The Girl on the Train|Paula Hawkins|3.96
+The Girl with the Dragon Tattoo|Stieg Larsson|4.18
+The Da Vinci Code|Dan Brown|3.94
+Angels & Demons|Dan Brown|3.96
+A Good Girl’s Guide to Murder|Holly Jackson|4.28
+Sharp Objects|Gillian Flynn|4.00
+Never Lie|Freida McFadden|4.07
+The Guest List|Lucy Foley|3.79
+None of This Is True|Lisa Jewell|4.06
+The Housemaid’s Secret|Freida McFadden|4.14
+The Woman in the Window|A.J. Finn|3.93
+The Only One Left|Riley Sager|4.12
+The Girl Who Played with Fire|Stieg Larsson|4.26
+Rock Paper Scissors|Alice Feeney|3.86
+Pretty Girls|Karin Slaughter|4.00
+Dark Matter|Blake Crouch|4.13
+Dark Places|Gillian Flynn|3.94
+Then She Was Gone|Lisa Jewell|4.03
+Behind Closed Doors|B.A. Paris|3.96
+And Then There Were None|Agatha Christie|4.27
+The Girl Who Kicked the Hornet’s Nest|Stieg Larsson|4.25
+The Woman in Cabin 10|Ruth Ware|3.71
+The Lost Symbol|Dan Brown|3.77
+Lock Every Door|Riley Sager|3.87
+A Flicker in the Dark|Stacy Willingham|3.96
+The Inmate|Freida McFadden|3.99
+First Lie Wins|Ashley Elston|3.98
+Hidden Pictures|Jason Rekulak|4.13
+Inferno|Dan Brown|3.91
+Local Woman Missing|Mary Kubica|4.11
+The Paris Apartment|Lucy Foley|3.64
+One of Us Is Lying|Karen M. McManus|3.90
+Home Before Dark|Riley Sager|4.03
+The Family Upstairs|Lisa Jewell|3.94
+Good Girl, Bad Blood|Holly Jackson|4.25
+Final Girls|Riley Sager|3.81
+The Couple Next Door|Shari Lapena|3.80
+The Boyfriend|Freida McFadden|4.03
+The Teacher|Freida McFadden|3.88
+The God of the Woods|Liz Moore|4.09
+The House Across the Lake|Riley Sager|3.57
+The Perfect Marriage|Jeneva Rose|3.97
+The Silence of the Lambs|Thomas Harris|4.26
+The Maidens|Alex Michaelides|3.61
+You|Caroline Kepnes|3.96
+Deception Point|Dan Brown|3.77`,
+History:`Sapiens|Yuval Noah Harari|4.32
+Guns, Germs, and Steel|Jared Diamond|4.04
+A People’s History of the United States|Howard Zinn|4.09
+The Diary of a Young Girl|Anne Frank|4.20
+The Devil in the White City|Erik Larson|4.00
+1776|David McCullough|4.11
+SPQR: A History of Ancient Rome|Mary Beard|4.05
+A Short History of Nearly Everything|Bill Bryson|4.21
+The Rise and Fall of the Third Reich|William L. Shirer|4.23
+1491|Charles C. Mann|4.05
+Killers of the Flower Moon|David Grann|4.14
+Night|Elie Wiesel|4.38
+Bury My Heart at Wounded Knee|Dee Brown|4.26
+Team of Rivals|Doris Kearns Goodwin|4.28
+The Guns of August|Barbara W. Tuchman|4.18
+Unbroken|Laura Hillenbrand|4.39
+Genghis Khan and the Making of the Modern World|Jack Weatherford|4.06
+The Silk Roads|Peter Frankopan|4.16
+John Adams|David McCullough|4.09
+In the Garden of Beasts|Erik Larson|3.90
+Alexander Hamilton|Ron Chernow|4.22
+King Leopold’s Ghost|Adam Hochschild|4.20
+The Warmth of Other Suns|Isabel Wilkerson|4.48
+The Wager|David Grann|4.16
+A Distant Mirror|Barbara W. Tuchman|4.05
+Dead Wake|Erik Larson|4.13
+The Immortal Life of Henrietta Lacks|Rebecca Skloot|4.13
+The Histories|Herodotus|4.01
+Say Nothing|Patrick Radden Keefe|4.47
+The Rape of Nanking|Iris Chang|4.26
+Homo Deus|Yuval Noah Harari|4.18
+Lies My Teacher Told Me|James W. Loewen|3.97
+The Splendid and the Vile|Erik Larson|4.30
+Salt: A World History|Mark Kurlansky|3.75
+The Radium Girls|Kate Moore|4.15
+Endurance: Shackleton’s Incredible Voyage|Alfred Lansing|4.47
+The Professor and the Madman|Simon Winchester|3.84
+History of the Peloponnesian War|Thucydides|3.95
+Rubicon|Tom Holland|4.23
+Hiroshima|John Hersey|4.06
+Band of Brothers|Stephen E. Ambrose|4.44
+Destiny of the Republic|Candice Millard|4.25
+Caste|Isabel Wilkerson|4.52
+Collapse|Jared Diamond|3.94
+The Art of War|Sun Tzu|3.94
+Man’s Search for Meaning|Viktor E. Frankl|4.37
+On Tyranny|Timothy Snyder|4.28
+In the Heart of the Sea|Nathaniel Philbrick|4.17
+The Boys in the Boat|Daniel James Brown|4.39
+Midnight in Chernobyl|Adam Higginbotham|4.36`};
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const key=b=>norm(b.t)+'|'+norm(b.a);
+const parse=txt=>txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+  let p=l.split('|');
+  if(p.length<2){const m=l.match(/^(.*?)(?:\s+[-–—]\s+|\s+by\s+)(.*)$/i);p=m?[m[1],m[2]]:[l,''];}
+  const t=p[0].trim();let a=(p[1]||'').trim(),r=p[2]?parseFloat(p[2]):null;
+  if(!r){const m=a.match(/\s+(\d\.\d{1,2})$/);if(m){r=parseFloat(m[1]);a=a.slice(0,-m[0].length).trim();}}
+  return{t,a,r:r||null};
+}).filter(b=>b.t);
+
+const ld=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let lists=ld('bl_lists',null);
+let seen=ld('bl_seen',null)||(lists?['s0','s1']:[]);
+lists=lists||[];
+Object.entries(SEED).forEach(([n,t],i)=>{
+  const id='s'+i;
+  if(seen.includes(id))return;
+  if(!lists.some(l=>l.name.toLowerCase()===n.toLowerCase()))lists.push({id,name:n,books:parse(t)});
+  seen.push(id);
+});
+sv('bl_lists',lists);sv('bl_seen',seen);
+let checks=ld('bl_checks',{});
+checks=Object.fromEntries(Object.keys(checks).map(k=>[k.split('|').map(norm).join('|'),1]));
+sv('bl_checks',checks);
+const open=new Set(lists[0]?[lists[0].id]:[]);
+
+function render(){
+  let tot=0,done=0;
+  const html=lists.map(l=>{
+    const d=l.books.filter(b=>checks[key(b)]).length;tot+=l.books.length;done+=d;
+    const pct=l.books.length?Math.round(d/l.books.length*100):0,o=open.has(l.id);
+    const rows=o?'<ul>'+l.books.map((b,i)=>`<li><button class="row${checks[key(b)]?' on':''}" data-g="${l.id}" data-i="${i}"><span class="ck"></span><span class="tx"><span class="t">${esc(b.t)}</span><span class="a">${esc(b.a)}${b.r?' · ★ '+b.r.toFixed(2):''}</span></span></button></li>`).join('')+`</ul><button class="del" data-del="${l.id}">Delete this list</button>`:'';
+    return `<section class="card"><button class="gh" data-g="${l.id}"><span class="gn">${esc(l.name)}</span><span class="gc">${d} of ${l.books.length}</span><span class="chev">${o?'▾':'▸'}</span><i class="track"><b style="width:${pct}%"></b></i></button>${rows}</section>`;
+  }).join('');
+  $('#lists').innerHTML=html||'<p class="empty">No lists yet. Tap + to add one.</p>';
+  $('#ov').style.width=(tot?done/tot*100:0)+'%';
+  $('#oc').textContent=done+' of '+tot+' read';
+}
+
+$('#lists').onclick=e=>{
+  const r=e.target.closest('[data-i]'),d=e.target.closest('[data-del]'),g=e.target.closest('[data-g]');
+  if(d){const l=lists.find(x=>x.id==d.dataset.del);
+    if(l&&confirm('Delete “'+l.name+'”?')){lists=lists.filter(x=>x!==l);sv('bl_lists',lists);render();}return;}
+  if(r){const l=lists.find(x=>x.id==r.dataset.g),k=key(l.books[r.dataset.i]);
+    if(checks[k])delete checks[k];else checks[k]=1;
+    sv('bl_checks',checks);render();return;}
+  if(g){if(open.has(g.dataset.g))open.delete(g.dataset.g);else open.add(g.dataset.g);render();}
+};
+
+const close=()=>{$('#sheet').classList.remove('show');$('#msg').textContent='';};
+$('#add').onclick=()=>$('#sheet').classList.add('show');
+$('#cancel').onclick=close;
+$('#sheet').onclick=e=>{if(e.target.id==='sheet')close();};
+$('#imp').onclick=()=>{
+  const n=$('#nm').value.trim(),books=parse($('#tx').value);
+  if(!n||!books.length){$('#msg').textContent='Enter a genre name and at least one book.';return;}
+  const ex=lists.find(l=>l.name.toLowerCase()===n.toLowerCase());
+  if(ex){ex.books=books;open.add(ex.id);}
+  else{const l={id:'u'+Date.now(),name:n,books};lists.push(l);open.add(l.id);}
+  sv('bl_lists',lists);$('#nm').value='';$('#tx').value='';close();render();
+};
+render();
+</script>
+</body>
+</html>
